@@ -248,6 +248,48 @@ static const uint16_t ILI932x_regValues[] PROGMEM = {
   ILI932X_DISP_CTRL1       , 0x0133, // Main screen turn on
 };
 
+static const uint16_t LGDP4535_regValues[] PROGMEM = {
+  0x15,         0x0030,         /* Set the internal vcore voltage */
+  0x9A,         0x0010,         /* Start internal OSC */
+  0x11,         0x0020,         /* set SS and SM bit */
+  0x10,         0x3428,         /* set 1 line inversion */
+  0x12,         0x0002,         /* set GRAM write direction and BGR=1 */
+  0x13,         0x1038,         /* Resize register */
+  TFTLCD_DELAY, 40,
+  0x12,         0x0012,         /* set the back porch and front porch */
+  TFTLCD_DELAY, 40,
+  0x10,         0x3420,         /* set non-display area refresh cycle ISC[3:0] */
+  0x13,         0x3045,         /* FMARK function */
+  TFTLCD_DELAY, 70,
+  0x30,         0x0000,         /* RGB interface setting */
+  0x31,         0x0402,         /* Frame marker Position */
+  0x32,         0x0307,         /* RGB interface polarity */
+  0x33,         0x0304,         /* SAP, BT[3:0], AP, DSTB, SLP, STB */
+  0x34,         0x0004,         /* DC1[2:0], DC0[2:0], VC[2:0] */
+  0x35,         0x0401,         /* VREG1OUT voltage */
+  0x36,         0x0707,         /* VDV[4:0] for VCOM amplitude */
+  0x37,         0x0305,         /* SAP, BT[3:0], AP, DSTB, SLP, STB */
+  0x38,         0x0610,         /* DC1[2:0], DC0[2:0], VC[2:0] */
+  0x39,         0x0610,         /* VREG1OUT voltage */
+  0x01,         0x0100,         /* VDV[4:0] for VCOM amplitude */
+  0x02,         0x0300,         /* VCM[4:0] for VCOMH */
+  0x03,         0x1030,         /* GRAM horizontal Address */
+  0x08,         0x0808,         /* GRAM Vertical Address */
+  0x0A,         0x0008,
+  0x60,         0x2700,         /* Gate Scan Line */
+  0x61,         0x0001,         /* NDL,VLE, REV */
+  0x90,         0x013E,
+  0x92,         0x0100,
+  0x93,         0x0100,
+  0xA0,         0x3000,
+  0xA3,         0x0010,
+  0x07,         0x0001,
+  0x07,         0x0021,
+  0x07,         0x0023,
+  0x07,         0x0033,
+  0x07,         0x0133,
+};
+
 void Adafruit_TFTLCD::begin(uint16_t id) {
   uint8_t i = 0;
 
@@ -255,14 +297,23 @@ void Adafruit_TFTLCD::begin(uint16_t id) {
 
   delay(200);
 
-  if((id == 0x9325) || (id == 0x9328)) {
+  if((id == 0x9325) || (id == 0x9328) || (id == 0x4535)) {
 
+    const uint16_t *regValues;
+    size_t n;
     uint16_t a, d;
     driver = ID_932X;
     CS_ACTIVE;
-    while(i < sizeof(ILI932x_regValues) / sizeof(uint16_t)) {
-      a = pgm_read_word(&ILI932x_regValues[i++]);
-      d = pgm_read_word(&ILI932x_regValues[i++]);
+    if (id == 0x4535) {
+      regValues = LGDP4535_regValues;
+      n = sizeof(LGDP4535_regValues) / sizeof(uint16_t);
+    } else {
+      regValues = ILI932x_regValues;
+      n = sizeof(ILI932x_regValues) / sizeof(uint16_t);
+    }
+    while(i < n) {
+      a = pgm_read_word(&regValues[i++]);
+      d = pgm_read_word(&regValues[i++]);
       if(a == TFTLCD_DELAY) delay(d);
       else                  writeRegister16(a, d);
     }
